@@ -85,7 +85,7 @@ loanApplicationAForm mloanApplication =
     amountField = checkBool (> 0) ("The amount must be positive integer" :: Text) intField
     phoneField = checkBool (=~ [re|^\+?\d{5,15}$|]) ("The phone must be 5 to 15 digits long" :: Text) telField
 
-persistLoanApplication :: LoanApplicationResult Rational -> LoanApplication -> Handler LoanApplicationId
+persistLoanApplication :: LoanApplicationResult -> LoanApplication -> Handler LoanApplicationId
 persistLoanApplication loanResult loanApplication = do
   currentTime <- liftIO getCurrentTime
   case loanResult of

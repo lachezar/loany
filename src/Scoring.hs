@@ -2,7 +2,7 @@ module Scoring where
 
 import System.Random
 
-data LoanApplicationResult i = Offer Rational | Denial deriving (Show, Eq)
+data LoanApplicationResult = Offer Rational | Denial deriving (Show, Eq)
 
 isPrime :: Int -> Bool
 isPrime n
@@ -17,7 +17,7 @@ testPrimality n m
   | m * m < n = testPrimality n $ m + 2
   | otherwise = True
 
-score :: Int -> Int -> IO (LoanApplicationResult Rational)
+score :: Int -> Int -> IO LoanApplicationResult
 score currentAmount maximumAmount
   | currentAmount <= maximumAmount = return Denial
   | isPrime currentAmount = return $ Offer 9.99
