@@ -16,6 +16,7 @@ import Database.Persist.Postgresql
 
 import GHC.Float (double2Float)
 import Numeric (showFFloat)
+import Text.Regex.PCRE.Heavy
 
 import LoanApplicationState
 import Scoring
@@ -76,12 +77,13 @@ loanApplicationAForm :: Maybe LoanApplication -> AForm (HandlerFor App) LoanAppl
 loanApplicationAForm mloanApplication =
   LoanApplication <$> areq textField "Name" (loanApplicationName <$> mloanApplication) <*>
   areq emailField "Email" (loanApplicationEmail <$> mloanApplication) <*>
-  areq telField "Phone" (loanApplicationPhone <$> mloanApplication) <*>
+  areq phoneField "Phone" (loanApplicationPhone <$> mloanApplication) <*>
   areq amountField "Amount" (loanApplicationAmount <$> mloanApplication) <*>
   pure NotScoredYet <*>
   lift (liftIO getCurrentTime)
   where
     amountField = checkBool (> 0) ("The amount must be positive integer" :: Text) intField
+    phoneField = checkBool (=~ [re|^\+?\d{5,15}$|]) ("The phone must be 5 to 15 digits long" :: Text) telField
 
 persistLoanApplication :: LoanApplicationResult Rational -> LoanApplication -> Handler LoanApplicationId
 persistLoanApplication loanResult loanApplication = do

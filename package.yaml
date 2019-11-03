@@ -43,6 +43,8 @@ dependencies:
 - foreign-store
 - random
 - esqueleto
+- regex-compat
+- pcre-heavy
 
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
