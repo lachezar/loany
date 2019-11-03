@@ -60,9 +60,14 @@ form.apply {
 
 form.apply > div {
   display: flex;
+  flex-flow: wrap;
   justify-content: space-between;
-  min-width: 250px;
+  width: 250px;
   margin-bottom: 10px;
+}
+
+.errors {
+  color: #dc3545;
 }
 
 table.all-loan-applications td, table.all-loan-applications th {
