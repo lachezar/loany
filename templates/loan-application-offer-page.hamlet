@@ -1,0 +1,20 @@
+<h1>You have a loan offer
+
+<div.offer>
+  <div>
+    <div>Name:
+    <div>#{loanApplicationName loanApplication}
+  <div>
+    <div>Email:
+    <div>#{loanApplicationEmail loanApplication}
+  <div>
+    <div>Phone:
+    <div>#{loanApplicationPhone loanApplication}
+  <div>
+    <div>Sought amount:
+    <div>#{loanApplicationAmount loanApplication}kr
+  <div>
+    <div>Interest rate:
+    <div>#{interestRate}%
+  <div.links>
+    <a href=@{LoanApplicationR}>New loan application

@@ -1,0 +1,21 @@
+<h1>List of all loan applications
+<table.all-loan-applications>
+  <thead>
+    <tr>
+      <th>Name
+      <th>Email
+      <th>Phone
+      <th>Amount (kr)
+      <th>Interest rate (%)
+      <th>Status
+      <th>Inserted at
+  <tbody>
+    $forall (E.Value name, E.Value email, E.Value phone, E.Value amount, E.Value state, E.Value insertedAt, E.Value nominalInterestRate) <- loanApplications
+      <tr>
+        <td>#{name}
+        <td>#{email}
+        <td>#{phone}
+        <td>#{amount}
+        <td>#{maybe "" formatRational nominalInterestRate}
+        <td>#{show state}
+        <td>#{show insertedAt}

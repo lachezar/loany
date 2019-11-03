@@ -1,0 +1,6 @@
+<h1>Apply for a loan
+<form.apply method=post action=@{LoanApplicationR} enctype=#{formEnctype}>
+    ^{formWidget}
+    <button type=submit>Apply
+<div.links>
+  <a href=@{AllLoanApplicationsR}>View all loan applications

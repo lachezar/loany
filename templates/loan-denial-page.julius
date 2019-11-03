@@ -1,0 +1,12 @@
+((labels) => {
+  const countDown = (labels) => {
+    const label = labels.shift();
+    document.querySelector(".countdown").textContent = label;
+    if (labels.length === 0) {
+      document.location.replace("@{LoanApplicationR}");
+    } else {
+      setTimeout(() => countDown(labels), 1000);
+    }
+  };
+  countDown(labels);
+})(["3", "2", "1", "redirecting"]);
