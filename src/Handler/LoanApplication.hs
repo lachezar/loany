@@ -9,31 +9,17 @@
 module Handler.LoanApplication where
 
 import Import
-import Data.Typeable
 
+import qualified Database.Esqueleto as E
+import Database.Esqueleto ((?.), (^.))
 import Database.Persist.Postgresql
-import qualified Database.Esqueleto      as E
-import           Database.Esqueleto      ((^.), (?.))
 
+import GHC.Float (double2Float)
+import Numeric (showFFloat)
 
 import LoanApplicationState
 import Scoring
-import Numeric (showFFloat)
-import GHC.Float (double2Float)
 
--- Define our data that will be used for creating the form.
-data FileForm = FileForm
-    { fileInfo :: FileInfo
-    , fileDescription :: Text
-    }
-
--- This is a handler function for the GET request method on the HomeR
--- resource pattern. All of your resource patterns are defined in
--- config/routes
---
--- The majority of the code you will write in Yesod lives in these handler
--- functions. You can spread them across multiple files if you are so
--- inclined, or create a single monolithic file.
 getLoanApplicationR :: Handler Html
 getLoanApplicationR = do
   (formWidget, formEnctype) <- generateFormPost $ renderDivs $ loanApplicationAForm Nothing
@@ -47,10 +33,8 @@ postLoanApplicationR = do
     FormSuccess loanApplication -> do
       maxAmount <- readTVarIO maxSoughtAmountVar
       loanApplicationResult <- liftIO $ score currentAmount maxAmount
-      liftIO $ print $ show loanApplicationResult
       liftIO $ atomically $ writeTVar maxSoughtAmountVar $ max currentAmount maxAmount
-      loanApplicationKey <- persisteLoanApplication loanApplicationResult loanApplication
-      -- redirect based on the loan application result
+      loanApplicationKey <- persistLoanApplication loanApplicationResult loanApplication
       case loanApplicationResult of
         Offer _ -> redirect $ LoanApplicationOfferR loanApplicationKey
         Denial -> redirect LoanApplicationDenialR
@@ -70,7 +54,6 @@ getLoanApplicationOfferR loanApplicationId = do
 getLoanApplicationDenialR :: Handler Html
 getLoanApplicationDenialR = defaultLayout $(widgetFile "loan-denial-page")
 
-
 getAllLoanApplicationsR :: Handler Html
 getAllLoanApplicationsR = do
   loanApplications <-
@@ -86,53 +69,50 @@ getAllLoanApplicationsR = do
         , la ^. LoanApplicationAmount
         , la ^. LoanApplicationState
         , la ^. LoanApplicationInsertedAt
-        , lo ?. LoanOfferNominalInterestRate
---        , maybe "" (^. LoanOfferNominalInterestRate) lo
---      , E.coalesceDefault [lo ^. LoanOfferNominalInterestRate] (E.val "")
-         )
-  liftIO $ print $ show $ typeOf loanApplications
+        , lo ?. LoanOfferNominalInterestRate)
   defaultLayout $(widgetFile "all-loan-applications-page")
 
-
 loanApplicationAForm :: Maybe LoanApplication -> AForm (HandlerFor App) LoanApplication
-loanApplicationAForm mloanApplication = LoanApplication
-    <$> areq textField "Name" (loanApplicationName <$> mloanApplication)
-    <*> areq emailField "Email"  (loanApplicationEmail  <$> mloanApplication)
-    <*> areq telField "Phone"  (loanApplicationPhone  <$> mloanApplication)
-    <*> areq amountField "Amount"  (loanApplicationAmount <$> mloanApplication)
-    <*> pure NotScoredYet
-    <*> lift (liftIO getCurrentTime)
+loanApplicationAForm mloanApplication =
+  LoanApplication <$> areq textField "Name" (loanApplicationName <$> mloanApplication) <*>
+  areq emailField "Email" (loanApplicationEmail <$> mloanApplication) <*>
+  areq telField "Phone" (loanApplicationPhone <$> mloanApplication) <*>
+  areq amountField "Amount" (loanApplicationAmount <$> mloanApplication) <*>
+  pure NotScoredYet <*>
+  lift (liftIO getCurrentTime)
   where
     amountField = checkBool (> 0) ("The amount must be positive integer" :: Text) intField
 
-persisteLoanApplication :: LoanApplicationResult Rational -> LoanApplication -> Handler LoanApplicationId
-persisteLoanApplication loanResult loanApplication = do
+persistLoanApplication :: LoanApplicationResult Rational -> LoanApplication -> Handler LoanApplicationId
+persistLoanApplication loanResult loanApplication = do
   currentTime <- liftIO getCurrentTime
   case loanResult of
     Offer interestRate -> do
-      loanApplicationPK@(LoanApplicationKey (SqlBackendKey _laId)) <- runDB $ insert $ loanApplication {loanApplicationState = Approved, loanApplicationInsertedAt = currentTime}
-      liftIO $ print $ show loanApplicationPK
+      loanApplicationPK@(LoanApplicationKey (SqlBackendKey _laId)) <-
+        runDB $ insert $ loanApplication {loanApplicationState = Approved, loanApplicationInsertedAt = currentTime}
       let offer =
             LoanOffer
               { loanOfferLoanApplicationId = loanApplicationPK
               , loanOfferNominalInterestRate = interestRate
               , loanOfferInsertedAt = currentTime
               }
-      insertedLoanOffer <- runDB $ insert offer
-      liftIO $ print $ show insertedLoanOffer
+      _insertedLoanOffer <- runDB $ insert offer
       return loanApplicationPK
     Denial -> do
-      liftIO $ print ("the loan application was denied" :: String)
-      loanApplicationPK@(LoanApplicationKey (SqlBackendKey _laId)) <- runDB $ insert $ loanApplication {loanApplicationState = Denied, loanApplicationInsertedAt = currentTime}
-      liftIO $ print $ show loanApplicationPK
+      loanApplicationPK@(LoanApplicationKey (SqlBackendKey _laId)) <-
+        runDB $ insert $ loanApplication {loanApplicationState = Denied, loanApplicationInsertedAt = currentTime}
       return loanApplicationPK
 
-
-telField :: Monad m => RenderMessage (HandlerSite m) FormMessage => Field m Text
-telField = Field
+telField ::
+     Monad m
+  => RenderMessage (HandlerSite m) FormMessage =>
+       Field m Text
+telField =
+  Field
     { fieldParse = parseHelper Right
-    , fieldView = \theId name attrs val isReq ->
-        [whamlet|
+    , fieldView =
+        \theId name attrs val isReq ->
+          [whamlet|
 $newline never
 <input id="#{theId}" name="#{name}" *{attrs} type="tel" pattern="^\+?\d{5,15}$" :isReq:required value="#{either id id val}">
 |]
