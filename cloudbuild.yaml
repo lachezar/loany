@@ -1,0 +1,12 @@
+steps:
+- name: 'gcr.io/cloud-builders/git'
+  args: ['clone', '--branch', 'gcb', 'https://github.com/lachezar/loany', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-f', 'base.dockerfile', '-t', 'gcr.io/<PROJECT ID>/base-haskell:lts-14.13', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-f', 'Dockerfile', '-t', 'gcr.io/<PROJECT ID>/loany:latest', '.']
+options:
+  machineType: 'N1_HIGHCPU_8'
+  diskSizeGb: 40
+images: ['gcr.io/<PROJECT ID>/base-haskell:lts-14.13', 'gcr.io/<PROJECT ID>/loany:latest']
+timeout: 1800s

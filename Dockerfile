@@ -1,4 +1,4 @@
-FROM lachezar/base-haskell:lts-14.13 AS builder
+FROM gcr.io/atlantica-social-da271/base-haskell:lts-14.13 AS builder
 
 # Copy all local files and build the app
 COPY . .
